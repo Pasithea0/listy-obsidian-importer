@@ -1,8 +1,21 @@
-/*
+.suggestion-container {
+    background-color: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    box-shadow: var(--shadow-s);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.suggestion-item {
+    cursor: pointer;
+    padding: 8px 12px;
+    min-height: 2em;
+    display: flex;
+    align-items: center;
+}
 
-If your plugin does not need CSS, delete this file.
-
-*/
+.suggestion-item.is-selected {
+    background-color: var(--background-secondary);
+}
