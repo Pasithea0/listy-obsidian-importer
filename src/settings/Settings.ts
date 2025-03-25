@@ -1,9 +1,9 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
-import MyPlugin from "../main";
+import ListyImporter from "../main";
 import { FolderSuggestor } from "./suggestors/FolderSuggestor";
 import { FileSuggestor } from "./suggestors/FileSuggestor";
 
-export interface MyPluginSettings {
+export interface ListyImporterSettings {
 	mySetting: string;
 	outputFolder: string;
 	consolidateToDoLists: boolean;
@@ -13,7 +13,7 @@ export interface MyPluginSettings {
 	templateFile: string;
 }
 
-export const DEFAULT_SETTINGS: MyPluginSettings = {
+export const DEFAULT_SETTINGS: ListyImporterSettings = {
 	mySetting: 'default',
 	outputFolder: 'Listy',
 	consolidateToDoLists: true,
@@ -23,10 +23,10 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	templateFile: ''
 };
 
-export class MyPluginSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+export class ListyImporterSettingTab extends PluginSettingTab {
+	plugin: ListyImporter;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: ListyImporter) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}

@@ -1,9 +1,9 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
-import { MyPluginSettings, DEFAULT_SETTINGS, MyPluginSettingTab } from './settings/Settings';
+import { Plugin } from 'obsidian';
+import { DEFAULT_SETTINGS, ListyImporterSettings, ListyImporterSettingTab } from './settings/Settings';
 import { ListyImportModal } from './modal/ListyImportModal';
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class ListyImporter extends Plugin {
+	settings: ListyImporterSettings;
 
 	async onload() {
 		await this.loadSettings();
@@ -30,7 +30,7 @@ export default class MyPlugin extends Plugin {
 		});
 		
 		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new MyPluginSettingTab(this.app, this));
+		this.addSettingTab(new ListyImporterSettingTab(this.app, this));
 
 		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
 		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));

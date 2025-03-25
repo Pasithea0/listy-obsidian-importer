@@ -1,7 +1,7 @@
-import { App, normalizePath, Notice } from "obsidian";
+import { App, normalizePath } from "obsidian";
 import { v4 as uuidv4 } from 'uuid';
 import { ListyData, ListyItem, ListyList } from "../models/ListyTypes";
-import { MyPluginSettings } from "../settings/Settings";
+import { ListyImporterSettings } from "../settings/Settings";
 import { getTemplateContents, applyTemplateTransformations } from "../utils/templateUtils";
 
 export const USER_COMMENT_PLACEHOLDER = `%% Here you can type whatever you want, it will not be overwritten by the plugin. %%`;
@@ -15,9 +15,9 @@ export interface ListyNoteItem {
 
 export class ListyImportService {
     app: App;
-    settings: MyPluginSettings;
+    settings: ListyImporterSettings;
 
-    constructor(app: App, settings: MyPluginSettings) {
+    constructor(app: App, settings: ListyImporterSettings) {
         this.app = app;
         this.settings = settings;
     }
@@ -328,6 +328,15 @@ export class ListyImportService {
     private async generateItemContent(item: ListyItem, list: ListyList): Promise<string> {
         // Get template content
         const templateContent = await getTemplateContents(this.app, this.settings.templateFile);
+        
+        // Process description in the item if it exists
+        if (item.attributes) {
+            for (const attr of item.attributes) {
+                if (attr.key.toLowerCase() === 'description') {
+                    attr.value = this.processDescription(attr.value);
+                }
+            }
+        }
         
         // Apply transformations
         return applyTemplateTransformations(templateContent, item, list);

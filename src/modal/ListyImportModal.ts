@@ -1,17 +1,16 @@
-import { App, Modal, Notice, normalizePath } from "obsidian";
-import { MyPluginSettings } from "../settings/Settings";
-import { ListyData, ListyItem, ListyList } from "../models/ListyTypes";
-import { sanitize } from "sanitize-filename-ts";
+import { App, Modal, Notice } from "obsidian";
+import { ListyImporterSettings } from "../settings/Settings";	
+import { ListyData } from "../models/ListyTypes";
 import { ListyImportService } from "../services/ListyImportService";
 
 export class ListyImportModal extends Modal {
     goButtonEl!: HTMLButtonElement;
     inputFileEl!: HTMLInputElement;
-    settings: MyPluginSettings;
+    settings: ListyImporterSettings;
     fileContent: any | null;
     importService: ListyImportService;
 
-    constructor(app: App, settings: MyPluginSettings) {
+    constructor(app: App, settings: ListyImporterSettings) {
         super(app);
         this.settings = settings;
         this.fileContent = null;
