@@ -1,6 +1,6 @@
 import { App, normalizePath } from "obsidian";
 import { v4 as uuidv4 } from 'uuid';
-import { ListyData, ListyItem, ListyList } from "../models/ListyTypes";
+import { ListyData, ListyItem, ListyList } from "../types/ListyTypes";
 import { ListyImporterSettings } from "../settings/Settings";
 import { getTemplateContents, applyTemplateTransformations } from "../utils/templateUtils";
 
@@ -30,7 +30,7 @@ export class ListyImportService {
             throw new Error('Invalid Listy JSON format: missing lists array');
         }
         
-        // Make sure output folder exists
+        // Check output folder
         if (this.settings.outputFolder && this.settings.outputFolder.length > 0) {
             const folderExists = await this.app.vault.adapter.exists(this.settings.outputFolder);
             if (!folderExists) {
@@ -41,12 +41,11 @@ export class ListyImportService {
         // Process each list
         let totalNotesCreated = 0;
         for (const list of listyData.lists) {
-            // Skip lists with no items
-            if (!list.items || list.items.length === 0) {
+
+			if (!list.items || list.items.length === 0) {
                 continue;
             }
             
-			// Handle To Do lists that should be consolidated
             const isToDoList = list.type === 'Tasks';
             const shouldConsolidate = isToDoList && this.settings.consolidateToDoLists;
             
@@ -64,18 +63,16 @@ export class ListyImportService {
                 await this.app.vault.createFolder(listFolderPath);
             }
             
-            // Process each item in the list as individual notes
+            // Process items if not consolidated
             for (const item of list.items) {
                 const sanitizedItemTitle = this.sanitizeFileName(item.title);
                 const notePath = normalizePath(`${listFolderPath}/${sanitizedItemTitle}.md`);
                 
-                // Check if the note already exists
                 let existingContent: string | null = null;
                 try {
                     existingContent = await this.app.vault.adapter.read(notePath);
                     console.log(`Found existing note: ${sanitizedItemTitle}`);
                     
-                    // Check if the note is locked and should be skipped
                     if (this.settings.enableNoteLocking && existingContent) {
                         const lockMatch = existingContent.match(/^lock:\s*true/m);
                         if (lockMatch) {
@@ -90,10 +87,8 @@ export class ListyImportService {
                     // File doesn't exist, create it
                 }
                 
-                // Generate the note content, preserving comments if the note exists
                 const noteContent = await this.generateNoteContent(item, list, existingContent);
                 
-                // Write the file
                 await this.app.vault.adapter.write(notePath, noteContent);
                 totalNotesCreated++;
             }
@@ -103,28 +98,24 @@ export class ListyImportService {
     }
     
     /**
-     * Generate note content for a Listy item
+     * Generate note content
      */
     private async generateNoteContent(item: ListyItem, list: ListyList, existingContent: string | null): Promise<string> {
-        // Check if the note already exists and contains our markers
         if (existingContent) {
             const itemId = this.extractItemId(existingContent);
             if (itemId) {
-                // The note exists and has our markers, so update only the content part
+                // Update only the content part
                 return this.updateExistingNote(item, list, existingContent, itemId);
             }
         }
         
-        // Generate a new ID for this item
         const itemId = uuidv4();
         
-        // Create frontmatter
         const frontmatter = this.generateFrontmatter(item, list);
         
         // Generate the note content using template
         const noteContent = await this.generateItemContent(item, list);
         
-        // Structure with comment preservation markers
         let result = frontmatter;
         result += `%%START-${itemId}%%\n\n`;
         result += `${USER_COMMENT_PLACEHOLDER}\n\n`;
@@ -138,7 +129,7 @@ export class ListyImportService {
     }
     
     /**
-     * Extract the ID from an existing note
+     * Extract ID from an existing note
      */
     private extractItemId(content: string): string | null {
         const startMatch = content.match(/%%START-([0-9a-f-]+)%%/);
@@ -152,13 +143,11 @@ export class ListyImportService {
      * Update an existing note while preserving user comments
      */
     private async updateExistingNote(item: ListyItem, list: ListyList, existingContent: string, itemId: string): Promise<string> {
-        // Find the content markers in the existing content
         const startBlockMarker = `%%START-${itemId}%%`;
         const endBlockMarker = `%%END-${itemId}%%`;
         const startContentMarker = `%%START-EXTRACTED-CONTENT-${itemId}%%`;
         const endContentMarker = `%%END-EXTRACTED-CONTENT-${itemId}%%`;
         
-        // Check if all markers exist
         if (!existingContent.includes(startBlockMarker) || 
             !existingContent.includes(endBlockMarker) || 
             !existingContent.includes(startContentMarker) || 
@@ -167,11 +156,9 @@ export class ListyImportService {
             return this.generateNoteContent(item, list, null);
         }
         
-        // Generate new frontmatter and content using template
         const frontmatter = this.generateFrontmatter(item, list);
         const newItemContent = await this.generateItemContent(item, list);
         
-        // Split the content into sections
         const startContentIndex = existingContent.indexOf(startContentMarker);
         const endContentIndex = existingContent.indexOf(endContentMarker);
         
@@ -180,32 +167,18 @@ export class ListyImportService {
             return this.generateNoteContent(item, list, null);
         }
         
-        // Extract sections while preserving user comments
-        const contentStart = startContentIndex + startContentMarker.length;
-        const contentEnd = endContentIndex;
-        
-        // Find the frontmatter section
-        const frontmatterStart = existingContent.indexOf('---');
-        const frontmatterEnd = existingContent.indexOf('---', frontmatterStart + 3) + 3;
-        
         // Extract the user content sections
-        let beforeBlock = '';
-        let afterBlock = '';
         let beforeContent = '';
         let afterContent = '';
         
         const blockStartIndex = existingContent.indexOf(startBlockMarker);
         const blockEndIndex = existingContent.indexOf(endBlockMarker) + endBlockMarker.length;
         
-        // Everything before the start block marker should be removed (old frontmatter)
-        
-        // Extract the user comment before the content
         beforeContent = existingContent.substring(
             blockStartIndex + startBlockMarker.length,
             startContentIndex
         );
         
-        // Extract the user comment after the content
         afterContent = existingContent.substring(
             endContentIndex + endContentMarker.length,
             blockEndIndex - endBlockMarker.length
@@ -225,7 +198,7 @@ export class ListyImportService {
      */
     private processDescription(description: string): string {
         if (this.settings.tagReplacement !== undefined) {
-            // Simply replace all # characters with the specified replacement
+            // Replace all # characters with the specified replacement
             return description.replace(/#/g, this.settings.tagReplacement);
         }
         return description;
@@ -326,7 +299,6 @@ export class ListyImportService {
      * Generate the actual content for a note (without markers)
      */
     private async generateItemContent(item: ListyItem, list: ListyList): Promise<string> {
-        // Get template content
         const templateContent = await getTemplateContents(this.app, this.settings.templateFile);
         
         // Create a sanitized copy of the item
@@ -353,7 +325,6 @@ export class ListyImportService {
      * Helper function to escape YAML strings properly
      */
     private escapeYamlString(str: string): string {
-        // Replace backslashes, quotes, and control characters
         return str
             .replace(/\\/g, '\\\\')
             .replace(/"/g, '\\"')
@@ -378,6 +349,7 @@ export class ListyImportService {
             .replace(/\|/g, '-')
             .replace(/=/g, '-')
             .replace(/\0/g, '')
+			.replace(/#/g, '')
             .trim();
         
         if (sanitized.startsWith('.')) {
@@ -394,19 +366,17 @@ export class ListyImportService {
     }
 
     /**
-     * Create a consolidated To Do list note
+     * Consolidated To Do list note
      */
     private async createConsolidatedToDoList(list: ListyList, folderPath: string): Promise<void> {
         const listPath = normalizePath(`${folderPath}/${this.sanitizeFileName(list.title)}.md`);
         
-        // Check if the note already exists
         let existingContent: string | null = null;
         let existingTasks: Map<string, boolean> = new Map();
         
         try {
             existingContent = await this.app.vault.adapter.read(listPath);
             
-            // Check if the list is locked and should be skipped
             if (this.settings.enableNoteLocking && existingContent) {
                 const lockMatch = existingContent.match(/^lock:\s*true/m);
                 if (lockMatch) {
@@ -415,7 +385,6 @@ export class ListyImportService {
                 }
             }
             
-            // Parse existing tasks
             const taskRegex = /- \[([ x])\] (.*?)$/gm;
             let match;
             while ((match = taskRegex.exec(existingContent)) !== null) {
@@ -427,10 +396,8 @@ export class ListyImportService {
             console.log(`Updating existing To Do list: ${list.title}`);
         } catch (error) {
             console.log(`Creating new To Do list: ${list.title}`);
-            // File doesn't exist, create it
         }
         
-        // Generate the note content
         let content = `---\n`;
         content += `source: listy\n`;
         content += `type: todo\n`;
@@ -441,7 +408,6 @@ export class ListyImportService {
         
         content += `# ${list.title}\n\n`;
         
-        // Generate unique ID for the list
         const listId = existingContent ? this.extractItemId(existingContent) : uuidv4();
         
         content += `%%START-${listId}%%\n\n`;

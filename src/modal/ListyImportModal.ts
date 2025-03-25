@@ -1,6 +1,6 @@
 import { App, Modal, Notice } from "obsidian";
 import { ListyImporterSettings } from "../settings/Settings";	
-import { ListyData } from "../models/ListyTypes";
+import { ListyData } from "../types/ListyTypes";
 import { ListyImportService } from "../services/ListyImportService";
 
 export class ListyImportModal extends Modal {
@@ -26,7 +26,7 @@ export class ListyImportModal extends Modal {
             // Parse the JSON content as ListyData
             const listyData = this.fileContent as ListyData;
             
-            // Process the data using the service
+            // Process the data
             const count = await this.importService.processListyData(listyData);
             return count;
         } catch (error) {

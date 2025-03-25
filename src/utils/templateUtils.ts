@@ -1,5 +1,5 @@
 import { App, normalizePath, Notice } from "obsidian";
-import { ListyItem, ListyList } from "../models/ListyTypes";
+import { ListyItem, ListyList } from "../types/ListyTypes";
 
 export const DEFAULT_TEMPLATE = `# {{Title}}
 
@@ -9,7 +9,7 @@ export const DEFAULT_TEMPLATE = `# {{Title}}
 
 {{Description}}
 
-![Cover Image]({{Cover}})]
+![Cover Image]({{Cover}})
 
 ## Notes
 
