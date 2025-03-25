@@ -11,7 +11,7 @@ export interface MyPluginSettings {
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
 	mySetting: 'default',
-	outputFolder: '',
+	outputFolder: 'Listy',
 	consolidateToDoLists: true,
 	includeTags: false
 };
