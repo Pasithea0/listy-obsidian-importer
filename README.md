@@ -112,4 +112,4 @@ If you encounter any issues or have feature requests, please open an issue on th
 
 ## License
 
-This project is licensed under MIT License
+This project is licensed under OBSD License
