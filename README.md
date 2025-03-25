@@ -1,94 +1,115 @@
-# Obsidian Sample Plugin
+# Listy Importer for Obsidian
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+Listy Importer is a plugin for [Obsidian](https://obsidian.md) that allows you to import your Listy lists and items into Obsidian notes.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+This plugin is heavily inspired and based on code from https://github.com/OGKevin/obsidian-kobo-highlights-import
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+## Features
 
-## First time developing plugins?
+- **Import Listy Data**: Import all your Listy lists and items from a JSON export file
+- **Template Support**: Customize the formatting of imported notes using templates
+- **Flexible Configuration**:
+  - Choose where to save your imported notes
+  - Consolidate To Do lists into single notes
+  - Handle tags from Listy items
+  - Lock notes to prevent overwriting during reimport
+- **Preserves User Comments**: When reimporting, user comments in notes are preserved
 
-Quick starting guide for new plugin devs:
+## How to Use
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+1. Export your data from Listy as a JSON file
+2. Open Obsidian and click the Listy icon in the left ribbon, or use the command "Import Listy Lists"
+3. Select your JSON export file
+4. Click "Import" and wait for the process to complete
 
-## Releasing new releases
+## Installation
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+### Using BRAT (Beta Releases and Testing)
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+1. Open Obsidian Settings
+2. Go to Community plugins
+3. Disable Safe mode if necessary
+4. Click "Browse" and search for "BRAT"
+5. Install the plugin and enable it
+6. Enter BRAT settings and add a beta plugin by entering this URL: `https://github.com/Pasithea0/listy-obsidian-importer`
+7. Refresh the plugin list
 
-## Adding your plugin to the community plugin list
+<!-- ### NOT YET From Obsidian Community Plugins NOT YET
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+1. Open Obsidian Settings
+2. Go to Community plugins
+3. Disable Safe mode if necessary
+4. Click "Browse" and search for "Listy Importer"
+5. Install the plugin and enable it -->
 
-## How to use
+### Manual Installation
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+1. Download the latest release files (`main.js`, `manifest.json`, `styles.css`)
+2. Create a folder named `listy-obsidian-importer` in your vault's `.obsidian/plugins/` directory
+3. Place the downloaded files in this folder
+4. Enable the plugin in Obsidian's settings
 
-## Manually installing the plugin
+## Configuration
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+The plugin can be configured through its settings tab:
 
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
+- **Output Folder**: Where to save your imported notes (default: "Listy")
+- **Consolidate To Do Lists**: Create a single note for To Do lists instead of individual notes for each item
+- **Include Tags**: Convert Listy tags to Obsidian tags in the frontmatter
+- **Escape Hashtags in Descriptions**: Prevent hashtags in descriptions from becoming Obsidian tags
+- **Enable Note Locking**: Add a "lock" property to notes that can be set to prevent reimporting
+- **Template File**: Choose a custom markdown file to use as a template for imported notes
 
-## Funding URL
+## Templates
 
-You can include funding URLs where people who use your plugin can financially support it.
+You can use a template file to customize how your Listy items are formatted when imported. 
 
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
+Default template:
 
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
+```
+# {{Title}}
+
+[Visit Original Source]({{URL}})
+
+## Description
+
+{{Description}}
+
+![Cover Image]({{Cover}})]
+
+## Notes
+
+{{UserNote}}
 ```
 
-If you have multiple URLs, you can also do:
+The template can include placeholders that will be replaced with data from your Listy items:
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
+- `{{Title}}` - Item title
+- `{{URL}}` - Item URL
+- `{{Description}}` - Item description
+- `{{Cover}}` - Cover image URL
+- `{{UserNote}}` - User notes from the item
+- `{{Author}}` - Author information
+- `{{Genre}}` - Genre information
+- `{{Rating}}` - Rating information
+- `{{Date}}` - Date information
+- `{{Price}}` - Price information
+- `{{ListTitle}}` - Title of the parent list
+- `{{ATTR:key}}` - Any custom attribute by key name
 
-## API Documentation
+## Development
 
-See https://github.com/obsidianmd/obsidian-api
+### Building from Source
+
+1. Clone this repository
+2. Install dependencies with `pnpm install`
+3. Build the plugin with `pnpm run build` or `pnpm run dev` for active development
+4. Copy `main.js`, `manifest.json`, and `styles.css` to your Obsidian plugins folder
+
+## Support
+
+If you encounter any issues or have feature requests, please open an issue on the GitHub repository.
+
+## License
+
+This project is licensed under MIT License
