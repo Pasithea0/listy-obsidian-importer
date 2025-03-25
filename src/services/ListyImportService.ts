@@ -45,24 +45,35 @@ export class ListyImportService {
                 continue;
             }
             
-            // Create a folder for each list inside the output folder
+            // Determine list handling strategy based on type
+            const isToDoList = list.type === 'Tasks';
+            const shouldConsolidate = isToDoList && this.settings.consolidateToDoLists;
+            
+            // Handle To Do lists that should be consolidated
+            if (shouldConsolidate) {
+                await this.createConsolidatedToDoList(list, this.settings.outputFolder);
+                totalNotesCreated++;
+                continue; // Skip to next list
+            }
+            
+            // For all other lists, create a folder and individual notes
             const sanitizedListTitle = this.sanitizeFileName(list.title);
             const listFolderPath = normalizePath(`${this.settings.outputFolder}/${sanitizedListTitle}`);
+            
+            // Create the folder if needed
             if (!(await this.app.vault.adapter.exists(listFolderPath))) {
                 await this.app.vault.createFolder(listFolderPath);
             }
             
-            // Process each item in the list
+            // Process each item in the list as individual notes
             for (const item of list.items) {
                 const sanitizedItemTitle = this.sanitizeFileName(item.title);
                 const notePath = normalizePath(`${listFolderPath}/${sanitizedItemTitle}.md`);
                 
                 // Check if the note already exists
                 let existingContent: string | null = null;
-                let isUpdating = false;
                 try {
                     existingContent = await this.app.vault.adapter.read(notePath);
-                    isUpdating = true;
                     console.log(`Updating existing note: ${sanitizedItemTitle}`);
                 } catch (error) {
                     console.log(`Creating new note: ${sanitizedItemTitle}`);
@@ -331,5 +342,65 @@ export class ListyImportService {
         }
         
         return sanitized;
+    }
+
+    /**
+     * Create a consolidated To Do list note
+     */
+    private async createConsolidatedToDoList(list: ListyList, folderPath: string): Promise<void> {
+        const listPath = normalizePath(`${folderPath}/${this.sanitizeFileName(list.title)}.md`);
+        
+        // Check if the note already exists
+        let existingContent: string | null = null;
+        let existingTasks: Map<string, boolean> = new Map();
+        
+        try {
+            existingContent = await this.app.vault.adapter.read(listPath);
+            
+            // Parse existing tasks
+            const taskRegex = /- \[([ x])\] (.*?)$/gm;
+            let match;
+            while ((match = taskRegex.exec(existingContent)) !== null) {
+                const isChecked = match[1] === 'x';
+                const taskName = match[2];
+                existingTasks.set(taskName, isChecked);
+            }
+            
+            console.log(`Updating existing To Do list: ${list.title}`);
+        } catch (error) {
+            console.log(`Creating new To Do list: ${list.title}`);
+            // File doesn't exist, that's fine
+        }
+        
+        // Generate the note content
+        let content = `---\n`;
+        content += `source: listy\n`;
+        content += `type: todo\n`;
+        content += `list: "${this.escapeYamlString(list.title)}"\n`;
+        content += `create: ${list.create}\n`;
+        content += `update: ${list.update}\n`;
+        content += `---\n\n`;
+        
+        content += `# ${list.title}\n\n`;
+        
+        // Generate unique ID for the list
+        const listId = existingContent ? this.extractItemId(existingContent) : uuidv4();
+        
+        content += `%%START-${listId}%%\n\n`;
+        content += `${USER_COMMENT_PLACEHOLDER}\n\n`;
+        content += `%%START-EXTRACTED-CONTENT-${listId}%%\n\n`;
+        
+        // Add each task as a checklist item
+        for (const item of list.items) {
+            const isCompleted = item.marked || (existingTasks.has(item.title) && existingTasks.get(item.title));
+            content += `- [${isCompleted ? 'x' : ' '}] ${item.title}\n`;
+        }
+        
+        content += `\n%%END-EXTRACTED-CONTENT-${listId}%%\n\n`;
+        content += `${USER_COMMENT_PLACEHOLDER}\n\n`;
+        content += `%%END-${listId}%%\n`;
+        
+        // Write the file
+        await this.app.vault.adapter.write(listPath, content);
     }
 } 

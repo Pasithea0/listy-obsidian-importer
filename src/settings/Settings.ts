@@ -5,11 +5,13 @@ import { FolderSuggestor } from "./suggestors/FolderSuggestor";
 export interface MyPluginSettings {
 	mySetting: string;
 	outputFolder: string;
+	consolidateToDoLists: boolean;
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
 	mySetting: 'default',
-	outputFolder: ''
+	outputFolder: '',
+	consolidateToDoLists: true
 };
 
 export class MyPluginSettingTab extends PluginSettingTab {
@@ -27,7 +29,7 @@ export class MyPluginSettingTab extends PluginSettingTab {
 		containerEl.createEl('h2', { text: this.plugin.manifest.name });
 
 		this.addOutputFolderSetting();
-		// this.addMiscSettings();
+		this.addConsolidateToDoListsSetting();
 	}
 
 	addOutputFolderSetting(): void {
@@ -44,17 +46,18 @@ export class MyPluginSettingTab extends PluginSettingTab {
 					});
 			});
 	}
-
-	// addMiscSettings(): void {
-	// 	new Setting(this.containerEl)
-	// 		.setName('Setting #1')
-	// 		.setDesc('It\'s a secret')
-	// 		.addText(text => text
-	// 			.setPlaceholder('Enter your secret')
-	// 			.setValue(this.plugin.settings.mySetting)
-	// 			.onChange(async (value) => {
-	// 				this.plugin.settings.mySetting = value;
-	// 				await this.plugin.saveSettings();
-	// 			}));
-	// }
-} 
+	
+	addConsolidateToDoListsSetting(): void {
+		new Setting(this.containerEl)
+			.setName('Consolidate To Do lists')
+			.setDesc('Create a single note for To Do lists instead of individual notes for each item')
+			.addToggle(toggle => {
+				toggle
+					.setValue(this.plugin.settings.consolidateToDoLists)
+					.onChange(async (value) => {
+						this.plugin.settings.consolidateToDoLists = value;
+						await this.plugin.saveSettings();
+					});
+			});
+	}
+}
