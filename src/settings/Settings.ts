@@ -1,6 +1,7 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import MyPlugin from "../main";
 import { FolderSuggestor } from "./suggestors/FolderSuggestor";
+import { FileSuggestor } from "./suggestors/FileSuggestor";
 
 export interface MyPluginSettings {
 	mySetting: string;
@@ -9,6 +10,7 @@ export interface MyPluginSettings {
 	includeTags: boolean;
 	escapeDescriptionTags: boolean;
 	enableNoteLocking: boolean;
+	templateFile: string;
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
@@ -17,7 +19,8 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	consolidateToDoLists: true,
 	includeTags: false,
 	escapeDescriptionTags: true,
-	enableNoteLocking: false
+	enableNoteLocking: false,
+	templateFile: ''
 };
 
 export class MyPluginSettingTab extends PluginSettingTab {
@@ -39,6 +42,7 @@ export class MyPluginSettingTab extends PluginSettingTab {
 		this.addIncludeTagsSetting();
 		this.addEscapeDescriptionTagsSetting();
 		this.addEnableNoteLockingSetting();
+		this.addTemplateFileSetting();
 	}
 
 	addOutputFolderSetting(): void {
@@ -108,6 +112,21 @@ export class MyPluginSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.enableNoteLocking = value;
 						await this.plugin.saveSettings();
+					});
+			});
+	}
+
+	addTemplateFileSetting(): void {
+		new Setting(this.containerEl)
+			.setName('Template file')
+			.setDesc('Choose a markdown file to use as a template for new notes. Leave empty to use the default template.')
+			.addSearch((cb) => {
+				new FileSuggestor(this.app, cb.inputEl);
+				cb.setPlaceholder("Example: templates/listy-template.md")
+					.setValue(this.plugin.settings.templateFile)
+					.onChange((newTemplate) => {
+						this.plugin.settings.templateFile = newTemplate;
+						this.plugin.saveSettings();
 					});
 			});
 	}

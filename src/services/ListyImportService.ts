@@ -2,6 +2,7 @@ import { App, normalizePath, Notice } from "obsidian";
 import { v4 as uuidv4 } from 'uuid';
 import { ListyData, ListyItem, ListyList } from "../models/ListyTypes";
 import { MyPluginSettings } from "../settings/Settings";
+import { getTemplateContents, applyTemplateTransformations } from "../utils/templateUtils";
 
 export const USER_COMMENT_PLACEHOLDER = `%% Here you can type whatever you want, it will not be overwritten by the plugin. %%`;
 
@@ -90,7 +91,7 @@ export class ListyImportService {
                 }
                 
                 // Generate the note content, preserving comments if the note exists
-                const noteContent = this.generateNoteContent(item, list, existingContent);
+                const noteContent = await this.generateNoteContent(item, list, existingContent);
                 
                 // Write the file
                 await this.app.vault.adapter.write(notePath, noteContent);
@@ -104,7 +105,7 @@ export class ListyImportService {
     /**
      * Generate note content for a Listy item
      */
-    private generateNoteContent(item: ListyItem, list: ListyList, existingContent: string | null): string {
+    private async generateNoteContent(item: ListyItem, list: ListyList, existingContent: string | null): Promise<string> {
         // Check if the note already exists and contains our markers
         if (existingContent) {
             const itemId = this.extractItemId(existingContent);
@@ -120,8 +121,8 @@ export class ListyImportService {
         // Create frontmatter
         const frontmatter = this.generateFrontmatter(item, list);
         
-        // Generate the note content
-        const noteContent = this.generateItemContent(item);
+        // Generate the note content using template
+        const noteContent = await this.generateItemContent(item, list);
         
         // Structure with comment preservation markers
         let result = frontmatter;
@@ -150,7 +151,7 @@ export class ListyImportService {
     /**
      * Update an existing note while preserving user comments
      */
-    private updateExistingNote(item: ListyItem, list: ListyList, existingContent: string, itemId: string): string {
+    private async updateExistingNote(item: ListyItem, list: ListyList, existingContent: string, itemId: string): Promise<string> {
         // Find the content markers in the existing content
         const startBlockMarker = `%%START-${itemId}%%`;
         const endBlockMarker = `%%END-${itemId}%%`;
@@ -166,9 +167,9 @@ export class ListyImportService {
             return this.generateNoteContent(item, list, null);
         }
         
-        // Generate new frontmatter and content
+        // Generate new frontmatter and content using template
         const frontmatter = this.generateFrontmatter(item, list);
-        const newItemContent = this.generateItemContent(item);
+        const newItemContent = await this.generateItemContent(item, list);
         
         // Split the content into sections
         const startContentIndex = existingContent.indexOf(startContentMarker);
@@ -324,34 +325,12 @@ export class ListyImportService {
     /**
      * Generate the actual content for a note (without markers)
      */
-    private generateItemContent(item: ListyItem): string {
-        let content = `# ${item.title}\n\n`;
+    private async generateItemContent(item: ListyItem, list: ListyList): Promise<string> {
+        // Get template content
+        const templateContent = await getTemplateContents(this.app, this.settings.templateFile);
         
-        // Add URL as a link if it exists
-        if (item.url) {
-            content += `[Visit Original](${item.url})\n\n`;
-        }
-        
-        // If there's a description attribute, add it to the content
-        if (item.attributes) {
-            const description = item.attributes.find(attr => attr.key === 'DESCRIPTION');
-            if (description) {
-                // Process the description to escape hashtags if needed
-                const processedDesc = this.processDescription(description.value);
-                content += `## Description\n\n${processedDesc}\n\n`;
-            }
-            
-            // Add cover image if available
-            const cover = item.attributes.find(attr => attr.key === 'COVER');
-            if (cover) {
-                content += `![](${cover.value})\n\n`;
-            }
-        }
-        
-        // Add a section for notes
-        content += `## Notes\n\n`;
-        
-        return content;
+        // Apply transformations
+        return applyTemplateTransformations(templateContent, item, list);
     }
 
     /**
