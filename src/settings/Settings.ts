@@ -8,6 +8,7 @@ export interface MyPluginSettings {
 	consolidateToDoLists: boolean;
 	includeTags: boolean;
 	escapeDescriptionTags: boolean;
+	enableNoteLocking: boolean;
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
@@ -15,7 +16,8 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	outputFolder: 'Listy',
 	consolidateToDoLists: true,
 	includeTags: false,
-	escapeDescriptionTags: true
+	escapeDescriptionTags: true,
+	enableNoteLocking: false
 };
 
 export class MyPluginSettingTab extends PluginSettingTab {
@@ -36,6 +38,7 @@ export class MyPluginSettingTab extends PluginSettingTab {
 		this.addConsolidateToDoListsSetting();
 		this.addIncludeTagsSetting();
 		this.addEscapeDescriptionTagsSetting();
+		this.addEnableNoteLockingSetting();
 	}
 
 	addOutputFolderSetting(): void {
@@ -90,6 +93,20 @@ export class MyPluginSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.escapeDescriptionTags)
 					.onChange(async (value) => {
 						this.plugin.settings.escapeDescriptionTags = value;
+						await this.plugin.saveSettings();
+					});
+			});
+	}
+
+	addEnableNoteLockingSetting(): void {
+		new Setting(this.containerEl)
+			.setName('Enable note locking')
+			.setDesc('When enabled, adds a "lock" property to notes. Locked notes will be skipped during reimport.')
+			.addToggle(toggle => {
+				toggle
+					.setValue(this.plugin.settings.enableNoteLocking)
+					.onChange(async (value) => {
+						this.plugin.settings.enableNoteLocking = value;
 						await this.plugin.saveSettings();
 					});
 			});

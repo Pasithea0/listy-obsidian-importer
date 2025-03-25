@@ -72,6 +72,17 @@ export class ListyImportService {
                 let existingContent: string | null = null;
                 try {
                     existingContent = await this.app.vault.adapter.read(notePath);
+                    console.log(`Found existing note: ${sanitizedItemTitle}`);
+                    
+                    // Check if the note is locked and should be skipped
+                    if (this.settings.enableNoteLocking && existingContent) {
+                        const lockMatch = existingContent.match(/^lock:\s*true/m);
+                        if (lockMatch) {
+                            console.log(`Skipping locked note: ${sanitizedItemTitle}`);
+                            continue;
+                        }
+                    }
+                    
                     console.log(`Updating existing note: ${sanitizedItemTitle}`);
                 } catch (error) {
                     console.log(`Creating new note: ${sanitizedItemTitle}`);
@@ -301,6 +312,10 @@ export class ListyImportService {
         }
 
 		frontmatter += `marked: ${item.marked}\n`;
+
+		if (this.settings.enableNoteLocking) {
+			frontmatter += `lock: false\n`;
+		}
         
         frontmatter += `---\n\n`;
         return frontmatter;
@@ -395,6 +410,15 @@ export class ListyImportService {
         
         try {
             existingContent = await this.app.vault.adapter.read(listPath);
+            
+            // Check if the list is locked and should be skipped
+            if (this.settings.enableNoteLocking && existingContent) {
+                const lockMatch = existingContent.match(/^lock:\s*true/m);
+                if (lockMatch) {
+                    console.log(`Skipping locked To Do list: ${list.title}`);
+                    return;
+                }
+            }
             
             // Parse existing tasks
             const taskRegex = /- \[([ x])\] (.*?)$/gm;
