@@ -7,13 +7,15 @@ export interface MyPluginSettings {
 	outputFolder: string;
 	consolidateToDoLists: boolean;
 	includeTags: boolean;
+	escapeDescriptionTags: boolean;
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
 	mySetting: 'default',
 	outputFolder: 'Listy',
 	consolidateToDoLists: true,
-	includeTags: false
+	includeTags: false,
+	escapeDescriptionTags: true
 };
 
 export class MyPluginSettingTab extends PluginSettingTab {
@@ -33,6 +35,7 @@ export class MyPluginSettingTab extends PluginSettingTab {
 		this.addOutputFolderSetting();
 		this.addConsolidateToDoListsSetting();
 		this.addIncludeTagsSetting();
+		this.addEscapeDescriptionTagsSetting();
 	}
 
 	addOutputFolderSetting(): void {
@@ -73,6 +76,20 @@ export class MyPluginSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.includeTags)
 					.onChange(async (value) => {
 						this.plugin.settings.includeTags = value;
+						await this.plugin.saveSettings();
+					});
+			});
+	}
+
+	addEscapeDescriptionTagsSetting(): void {
+		new Setting(this.containerEl)
+			.setName('Escape hashtags in descriptions')
+			.setDesc('Prevent hashtags in descriptions from becoming Obsidian tags')
+			.addToggle(toggle => {
+				toggle
+					.setValue(this.plugin.settings.escapeDescriptionTags)
+					.onChange(async (value) => {
+						this.plugin.settings.escapeDescriptionTags = value;
 						await this.plugin.saveSettings();
 					});
 			});

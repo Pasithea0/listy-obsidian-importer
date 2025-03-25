@@ -209,6 +209,17 @@ export class ListyImportService {
     }
     
     /**
+     * Process a description text to escape hashtags if needed
+     */
+    private processDescription(description: string): string {
+        if (this.settings.escapeDescriptionTags) {
+            // Replace hashtags with backtick-escaped versions
+            return description.replace(/#(\w+)/g, '`#$1`');
+        }
+        return description;
+    }
+    
+    /**
      * Generate properties
      */
     private generateFrontmatter(item: ListyItem, list: ListyList): string {
@@ -233,7 +244,8 @@ export class ListyImportService {
             }
             
             if (attributesMap.has('description')) {
-                frontmatter += `description: |\n  ${attributesMap.get('description')?.replace(/\n/g, '\n  ')}\n`;
+                const processedDesc = this.processDescription(attributesMap.get('description') || '');
+                frontmatter += `description: |\n  ${processedDesc.replace(/\n/g, '\n  ')}\n`;
                 attributesMap.delete('description');
             }
             
@@ -309,7 +321,9 @@ export class ListyImportService {
         if (item.attributes) {
             const description = item.attributes.find(attr => attr.key === 'DESCRIPTION');
             if (description) {
-                content += `## Description\n\n${description.value}\n\n`;
+                // Process the description to escape hashtags if needed
+                const processedDesc = this.processDescription(description.value);
+                content += `## Description\n\n${processedDesc}\n\n`;
             }
             
             // Add cover image if available
