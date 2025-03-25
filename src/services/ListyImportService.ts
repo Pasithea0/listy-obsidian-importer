@@ -45,18 +45,16 @@ export class ListyImportService {
                 continue;
             }
             
-            // Determine list handling strategy based on type
+			// Handle To Do lists that should be consolidated
             const isToDoList = list.type === 'Tasks';
             const shouldConsolidate = isToDoList && this.settings.consolidateToDoLists;
             
-            // Handle To Do lists that should be consolidated
             if (shouldConsolidate) {
                 await this.createConsolidatedToDoList(list, this.settings.outputFolder);
                 totalNotesCreated++;
-                continue; // Skip to next list
+                continue;
             }
             
-            // For all other lists, create a folder and individual notes
             const sanitizedListTitle = this.sanitizeFileName(list.title);
             const listFolderPath = normalizePath(`${this.settings.outputFolder}/${sanitizedListTitle}`);
             
@@ -77,7 +75,7 @@ export class ListyImportService {
                     console.log(`Updating existing note: ${sanitizedItemTitle}`);
                 } catch (error) {
                     console.log(`Creating new note: ${sanitizedItemTitle}`);
-                    // File doesn't exist, that's fine
+                    // File doesn't exist, create it
                 }
                 
                 // Generate the note content, preserving comments if the note exists
@@ -211,7 +209,7 @@ export class ListyImportService {
     }
     
     /**
-     * Generate YAML frontmatter for a note
+     * Generate properties
      */
     private generateFrontmatter(item: ListyItem, list: ListyList): string {
         let frontmatter = `---\n`;
@@ -223,30 +221,55 @@ export class ListyImportService {
             frontmatter += `url: "${this.escapeYamlString(item.url)}"\n`;
         }
         
-        frontmatter += `marked: ${item.marked}\n`;
+        frontmatter += `type: ${item.type.toLowerCase()}\n`;
         
         // Process attributes as individual properties
         if (item.attributes && item.attributes.length > 0) {
             const attributesMap = new Map<string, string>();
             
             for (const attr of item.attributes) {
-                attributesMap.set(attr.key.toLowerCase(), attr.value);
+                const key = attr.key.toLowerCase();
+                attributesMap.set(key, attr.value);
             }
-
+            
+            if (attributesMap.has('description')) {
+                frontmatter += `description: |\n  ${attributesMap.get('description')?.replace(/\n/g, '\n  ')}\n`;
+                attributesMap.delete('description');
+            }
+            
             if (attributesMap.has('author')) {
                 frontmatter += `author: "${this.escapeYamlString(attributesMap.get('author') || '')}"\n`;
                 attributesMap.delete('author');
             }
             
-            if (attributesMap.has('description')) {
-                const desc = attributesMap.get('description') || '';
-                frontmatter += `description: |\n  ${desc.replace(/\n/g, '\n  ')}\n`;
-                attributesMap.delete('description');
-            }
-            
             if (attributesMap.has('cover')) {
                 frontmatter += `cover: "${this.escapeYamlString(attributesMap.get('cover') || '')}"\n`;
                 attributesMap.delete('cover');
+            }
+            
+            if (attributesMap.has('tags')) {
+                // Only process tags if the includeTags setting is enabled
+                if (this.settings.includeTags) {
+                    const tagsString = attributesMap.get('tags') || '';
+                    
+                    const tags = tagsString.split(',')
+                        .map(tag => tag.trim())
+                        .map(tag => {
+                            return tag.replace(/\s+/g, '-');
+                        })
+                        .filter(tag => tag.length > 0);
+                    
+                    if (tags.length > 0) {
+                        frontmatter += `tags:\n`;
+                        for (const tag of tags) {
+                            frontmatter += `  - "${this.escapeYamlString(tag)}"\n`;
+                        }
+                    }
+                }
+                
+                // Always store the original tags as a custom property
+                frontmatter += `original_tags: "${this.escapeYamlString(attributesMap.get('tags') || '')}"\n`;
+                attributesMap.delete('tags');
             }
             
             if (attributesMap.has('icon')) {
@@ -264,6 +287,8 @@ export class ListyImportService {
                 }
             }
         }
+
+		frontmatter += `marked: ${item.marked}\n`;
         
         frontmatter += `---\n\n`;
         return frontmatter;
@@ -369,7 +394,7 @@ export class ListyImportService {
             console.log(`Updating existing To Do list: ${list.title}`);
         } catch (error) {
             console.log(`Creating new To Do list: ${list.title}`);
-            // File doesn't exist, that's fine
+            // File doesn't exist, create it
         }
         
         // Generate the note content
@@ -400,7 +425,6 @@ export class ListyImportService {
         content += `${USER_COMMENT_PLACEHOLDER}\n\n`;
         content += `%%END-${listId}%%\n`;
         
-        // Write the file
         await this.app.vault.adapter.write(listPath, content);
     }
 } 

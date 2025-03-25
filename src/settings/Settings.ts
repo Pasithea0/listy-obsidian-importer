@@ -6,12 +6,14 @@ export interface MyPluginSettings {
 	mySetting: string;
 	outputFolder: string;
 	consolidateToDoLists: boolean;
+	includeTags: boolean;
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
 	mySetting: 'default',
 	outputFolder: '',
-	consolidateToDoLists: true
+	consolidateToDoLists: true,
+	includeTags: false
 };
 
 export class MyPluginSettingTab extends PluginSettingTab {
@@ -30,6 +32,7 @@ export class MyPluginSettingTab extends PluginSettingTab {
 
 		this.addOutputFolderSetting();
 		this.addConsolidateToDoListsSetting();
+		this.addIncludeTagsSetting();
 	}
 
 	addOutputFolderSetting(): void {
@@ -56,6 +59,20 @@ export class MyPluginSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.consolidateToDoLists)
 					.onChange(async (value) => {
 						this.plugin.settings.consolidateToDoLists = value;
+						await this.plugin.saveSettings();
+					});
+			});
+	}
+
+	addIncludeTagsSetting(): void {
+		new Setting(this.containerEl)
+			.setName('Include tags')
+			.setDesc('Convert listy tags to Obsidian tags in the frontmatter')
+			.addToggle(toggle => {
+				toggle
+					.setValue(this.plugin.settings.includeTags)
+					.onChange(async (value) => {
+						this.plugin.settings.includeTags = value;
 						await this.plugin.saveSettings();
 					});
 			});
