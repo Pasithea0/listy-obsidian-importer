@@ -8,9 +8,10 @@ export interface ListyImporterSettings {
 	outputFolder: string;
 	consolidateToDoLists: boolean;
 	includeTags: boolean;
-	escapeDescriptionTags: boolean;
+	tagReplacement: string;
 	enableNoteLocking: boolean;
 	templateFile: string;
+	maxTitleLength: number;
 }
 
 export const DEFAULT_SETTINGS: ListyImporterSettings = {
@@ -18,9 +19,10 @@ export const DEFAULT_SETTINGS: ListyImporterSettings = {
 	outputFolder: 'Listy',
 	consolidateToDoLists: true,
 	includeTags: false,
-	escapeDescriptionTags: true,
+	tagReplacement: '',
 	enableNoteLocking: false,
-	templateFile: ''
+	templateFile: '',
+	maxTitleLength: 105
 };
 
 export class ListyImporterSettingTab extends PluginSettingTab {
@@ -40,7 +42,8 @@ export class ListyImporterSettingTab extends PluginSettingTab {
 		this.addOutputFolderSetting();
 		this.addConsolidateToDoListsSetting();
 		this.addIncludeTagsSetting();
-		this.addEscapeDescriptionTagsSetting();
+		this.addTagReplacementSetting();
+		this.addMaxTitleLengthSetting();
 		this.addEnableNoteLockingSetting();
 		this.addTemplateFileSetting();
 	}
@@ -88,16 +91,43 @@ export class ListyImporterSettingTab extends PluginSettingTab {
 			});
 	}
 
-	addEscapeDescriptionTagsSetting(): void {
+	addTagReplacementSetting(): void {
 		new Setting(this.containerEl)
-			.setName('Escape hashtags in descriptions')
-			.setDesc('Prevent hashtags in descriptions from becoming Obsidian tags')
-			.addToggle(toggle => {
-				toggle
-					.setValue(this.plugin.settings.escapeDescriptionTags)
+			.setName('Hashtag replacement')
+			.setDesc('Replace # in descriptions with this text. Leave empty to remove hashtags, or use `#` to keep them unchanged.')
+			.addText(text => {
+				text
+					.setPlaceholder('Example: # or 🏷️')
+					.setValue(this.plugin.settings.tagReplacement)
 					.onChange(async (value) => {
-						this.plugin.settings.escapeDescriptionTags = value;
+						this.plugin.settings.tagReplacement = value;
 						await this.plugin.saveSettings();
+					});
+			});
+	}
+
+	addMaxTitleLengthSetting(): void {
+		new Setting(this.containerEl)
+			.setName('Maximum title length')
+			.setDesc('Set the maximum length for titles and filenames (10-105 characters)')
+			.addSlider(slider => {
+				slider
+					.setLimits(10, 105, 5)
+					.setValue(this.plugin.settings.maxTitleLength)
+					.setDynamicTooltip()
+					.onChange(async (value) => {
+						this.plugin.settings.maxTitleLength = value;
+						await this.plugin.saveSettings();
+					});
+			})
+			.addExtraButton(button => {
+				button
+					.setIcon('reset')
+					.setTooltip('Reset to default (105)')
+					.onClick(async () => {
+						this.plugin.settings.maxTitleLength = 105;
+						await this.plugin.saveSettings();
+						this.display();
 					});
 			});
 	}

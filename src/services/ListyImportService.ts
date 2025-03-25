@@ -221,12 +221,12 @@ export class ListyImportService {
     }
     
     /**
-     * Process a description text to escape hashtags if needed
+     * Process a description text to replace hashtags if needed
      */
     private processDescription(description: string): string {
-        if (this.settings.escapeDescriptionTags) {
-            // Replace hashtags with backtick-escaped versions
-            return description.replace(/#(\w+)/g, '`#$1`');
+        if (this.settings.tagReplacement !== undefined) {
+            // Simply replace all # characters with the specified replacement
+            return description.replace(/#/g, this.settings.tagReplacement);
         }
         return description;
     }
@@ -329,17 +329,24 @@ export class ListyImportService {
         // Get template content
         const templateContent = await getTemplateContents(this.app, this.settings.templateFile);
         
+        // Create a sanitized copy of the item
+        const sanitizedItem = { ...item };
+        const maxLength = this.settings.maxTitleLength;
+        sanitizedItem.title = this.sanitizeFileName(item.title).substring(0, maxLength);
+        if (sanitizedItem.title.length === maxLength) {
+            sanitizedItem.title = sanitizedItem.title.substring(0, maxLength - 3) + '...';
+        }
+        
         // Process description in the item if it exists
-        if (item.attributes) {
-            for (const attr of item.attributes) {
+        if (sanitizedItem.attributes) {
+            for (const attr of sanitizedItem.attributes) {
                 if (attr.key.toLowerCase() === 'description') {
                     attr.value = this.processDescription(attr.value);
                 }
             }
         }
         
-        // Apply transformations
-        return applyTemplateTransformations(templateContent, item, list);
+        return applyTemplateTransformations(templateContent, sanitizedItem, list);
     }
 
     /**
@@ -377,10 +384,10 @@ export class ListyImportService {
             sanitized = '_' + sanitized;
         }
         
-        // macOS has a max file name length of around 255 bytes
-        // To be safe, limit to 200 characters
-        if (sanitized.length > 200) {
-            sanitized = sanitized.substring(0, 197) + '...';
+        // Use the configurable max length
+        const maxLength = this.settings.maxTitleLength;
+        if (sanitized.length > maxLength) {
+            sanitized = sanitized.substring(0, maxLength - 3) + '...';
         }
         
         return sanitized;
