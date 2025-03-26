@@ -1,6 +1,6 @@
 # Listy Importer for Obsidian
 
-Listy Importer is a plugin for [Obsidian](https://obsidian.md) that allows you to import your Listy lists and items into Obsidian notes.
+Listy Importer is a plugin for [Obsidian](https://obsidian.md) that allows you to import your [Listy](https://apps.apple.com/us/app/listy-lists-of-collections/id1496035097) lists and items into Obsidian notes.
 
 This plugin is heavily inspired and based on code from https://github.com/OGKevin/obsidian-kobo-highlights-import
 

@@ -1,11 +1,11 @@
 {
 	"id": "listy-obsidian-importer",
 	"name": "Listy Importer",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"minAppVersion": "0.15.9",
 	"description": "Import Listy lists into Obsidian",
 	"author": "Pasithea",
-	"authorUrl": "",
-	"fundingUrl": "",
+	"authorUrl": "https://github.com/Pasithea0",
+	"fundingUrl": "https://ko-fi.com/pasithea0",
 	"isDesktopOnly": false
 }
