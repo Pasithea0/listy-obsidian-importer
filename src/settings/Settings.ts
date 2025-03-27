@@ -15,14 +15,14 @@ export interface ListyImporterSettings {
 }
 
 export const DEFAULT_SETTINGS: ListyImporterSettings = {
-	mySetting: 'default',
-	outputFolder: 'Listy',
+	mySetting: "default",
+	outputFolder: "Listy",
 	consolidateToDoLists: true,
 	includeTags: false,
-	tagReplacement: '',
+	tagReplacement: "",
 	enableNoteLocking: false,
-	templateFile: '',
-	maxTitleLength: 105
+	templateFile: "",
+	maxTitleLength: 105,
 };
 
 export class ListyImporterSettingTab extends PluginSettingTab {
@@ -37,7 +37,7 @@ export class ListyImporterSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 
 		containerEl.empty();
-		containerEl.createEl('h2', { text: this.plugin.manifest.name });
+		containerEl.createEl("h2", { text: this.plugin.manifest.name });
 
 		this.addOutputFolderSetting();
 		this.addConsolidateToDoListsSetting();
@@ -50,8 +50,8 @@ export class ListyImporterSettingTab extends PluginSettingTab {
 
 	addOutputFolderSetting(): void {
 		new Setting(this.containerEl)
-			.setName('Output folder')
-			.setDesc('Where to save your imported notes')
+			.setName("Output folder")
+			.setDesc("Where to save your imported notes")
 			.addSearch((cb) => {
 				new FolderSuggestor(this.app, cb.inputEl);
 				cb.setPlaceholder("Example: folder1/folder2")
@@ -62,12 +62,14 @@ export class ListyImporterSettingTab extends PluginSettingTab {
 					});
 			});
 	}
-	
+
 	addConsolidateToDoListsSetting(): void {
 		new Setting(this.containerEl)
-			.setName('Consolidate To Do lists')
-			.setDesc('Create a single note for To Do lists instead of individual notes for each item')
-			.addToggle(toggle => {
+			.setName("Consolidate To Do lists")
+			.setDesc(
+				"Create a single note for To Do lists instead of individual notes for each item"
+			)
+			.addToggle((toggle) => {
 				toggle
 					.setValue(this.plugin.settings.consolidateToDoLists)
 					.onChange(async (value) => {
@@ -79,9 +81,9 @@ export class ListyImporterSettingTab extends PluginSettingTab {
 
 	addIncludeTagsSetting(): void {
 		new Setting(this.containerEl)
-			.setName('Include tags')
-			.setDesc('Convert listy tags to Obsidian tags in the frontmatter')
-			.addToggle(toggle => {
+			.setName("Include tags")
+			.setDesc("Convert listy tags to Obsidian tags in the frontmatter")
+			.addToggle((toggle) => {
 				toggle
 					.setValue(this.plugin.settings.includeTags)
 					.onChange(async (value) => {
@@ -93,11 +95,12 @@ export class ListyImporterSettingTab extends PluginSettingTab {
 
 	addTagReplacementSetting(): void {
 		new Setting(this.containerEl)
-			.setName('Hashtag replacement')
-			.setDesc('Replace # in descriptions with this text. Leave empty to remove hashtags, or use `#` to keep them unchanged.')
-			.addText(text => {
-				text
-					.setPlaceholder('Example: # or 🏷️')
+			.setName("Hashtag replacement")
+			.setDesc(
+				"Replace # in descriptions with this text. Leave empty to remove hashtags, or use `#` to keep them unchanged."
+			)
+			.addText((text) => {
+				text.setPlaceholder("Example: # or 🏷️")
 					.setValue(this.plugin.settings.tagReplacement)
 					.onChange(async (value) => {
 						this.plugin.settings.tagReplacement = value;
@@ -108,9 +111,11 @@ export class ListyImporterSettingTab extends PluginSettingTab {
 
 	addMaxTitleLengthSetting(): void {
 		new Setting(this.containerEl)
-			.setName('Maximum title length')
-			.setDesc('Set the maximum length for titles and filenames (10-105 characters)')
-			.addSlider(slider => {
+			.setName("Maximum title length")
+			.setDesc(
+				"Set the maximum length for titles and filenames (10-105 characters)"
+			)
+			.addSlider((slider) => {
 				slider
 					.setLimits(10, 105, 5)
 					.setValue(this.plugin.settings.maxTitleLength)
@@ -120,10 +125,10 @@ export class ListyImporterSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					});
 			})
-			.addExtraButton(button => {
+			.addExtraButton((button) => {
 				button
-					.setIcon('reset')
-					.setTooltip('Reset to default (105)')
+					.setIcon("reset")
+					.setTooltip("Reset to default (105)")
 					.onClick(async () => {
 						this.plugin.settings.maxTitleLength = 105;
 						await this.plugin.saveSettings();
@@ -134,9 +139,11 @@ export class ListyImporterSettingTab extends PluginSettingTab {
 
 	addEnableNoteLockingSetting(): void {
 		new Setting(this.containerEl)
-			.setName('Enable note locking')
-			.setDesc('When enabled, adds a "lock" property to notes. Locked notes will be skipped during reimport.')
-			.addToggle(toggle => {
+			.setName("Enable note locking")
+			.setDesc(
+				'When enabled, adds a "lock" property to notes. Locked notes will be skipped during reimport.'
+			)
+			.addToggle((toggle) => {
 				toggle
 					.setValue(this.plugin.settings.enableNoteLocking)
 					.onChange(async (value) => {
@@ -148,8 +155,10 @@ export class ListyImporterSettingTab extends PluginSettingTab {
 
 	addTemplateFileSetting(): void {
 		new Setting(this.containerEl)
-			.setName('Template file')
-			.setDesc('Choose a markdown file to use as a template for new notes. Leave empty to use the default template.')
+			.setName("Template file")
+			.setDesc(
+				"Choose a markdown file to use as a template for new notes. Leave empty to use the default template."
+			)
 			.addSearch((cb) => {
 				new FileSuggestor(this.app, cb.inputEl);
 				cb.setPlaceholder("Example: templates/listy-template.md")
