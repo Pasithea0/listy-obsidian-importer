@@ -75,7 +75,7 @@ Default template:
 
 {{Description}}
 
-![Cover Image]({{Cover}})]
+![Cover Image]({{Cover}})
 
 ## Notes
 
