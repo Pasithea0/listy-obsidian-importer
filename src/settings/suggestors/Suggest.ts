@@ -172,12 +172,11 @@ export abstract class TextInputSuggest<T> implements ISuggestOwner<T> {
 
 		container.appendChild(this.suggestEl);
 
-		// Simple positioning logic since we don't have @popperjs/core
-		this.suggestEl.style.position = "absolute";
+		// Position the suggestor element
+		this.suggestEl.addClass('listy-suggestor');
 		const rect = inputEl.getBoundingClientRect();
 		this.suggestEl.style.left = `${rect.left}px`;
 		this.suggestEl.style.top = `${rect.bottom}px`;
-		this.suggestEl.style.width = `${rect.width}px`;
 	}
 
 	close(): void {

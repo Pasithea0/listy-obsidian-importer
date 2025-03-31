@@ -42,8 +42,13 @@ export class ListyImportModal extends Modal {
 		heading.textContent = "Import Listy Lists";
 
 		const description = contentEl.createEl("p");
-		description.innerHTML =
-			"Please select your <em>Listy export file</em> (.json or .listy)";
+		const text = document.createTextNode("Please select your ");
+		const em = document.createElement("em");
+		em.textContent = "Listy export file";
+		const text2 = document.createTextNode(" (.json or .listy)");
+		description.appendChild(text);
+		description.appendChild(em);
+		description.appendChild(text2);
 
 		this.inputFileEl = contentEl.createEl("input");
 		this.inputFileEl.type = "file";
