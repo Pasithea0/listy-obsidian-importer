@@ -1,3 +1,7 @@
+/* eslint-disable no-unused-vars */
+// Credits go to Liam's Periodic Notes Plugin: https://github.com/liamcain/obsidian-periodic-notes
+
+import { createPopper, Instance as PopperInstance } from "@popperjs/core";
 import { App, ISuggestOwner, Scope } from "obsidian";
 
 const wrapAround = (value: number, size: number): number => {
@@ -22,36 +26,33 @@ class Suggest<T> {
 		containerEl.on(
 			"click",
 			".suggestion-item",
-			this.onSuggestionClick.bind(this)
+			() => { this.onSuggestionClick.bind(this) }
 		);
 		containerEl.on(
 			"mousemove",
 			".suggestion-item",
-			this.onSuggestionMouseover.bind(this)
+			() => { this.onSuggestionMouseover.bind(this) }
 		);
 
 		scope.register([], "ArrowUp", (event) => {
-			if (!event.isComposing && this.selectedItem !== undefined) {
+			if (!event.isComposing && this.selectedItem != undefined) {
 				this.setSelectedItem(this.selectedItem - 1, true);
 				return false;
 			}
-			return true;
 		});
 
 		scope.register([], "ArrowDown", (event) => {
-			if (!event.isComposing && this.selectedItem !== undefined) {
+			if (!event.isComposing && this.selectedItem != undefined) {
 				this.setSelectedItem(this.selectedItem + 1, true);
 				return false;
 			}
-			return true;
 		});
 
 		scope.register([], "Enter", (event) => {
-			if (!event.isComposing && this.selectedItem !== undefined) {
+			if (!event.isComposing) {
 				this.useSelectedItem(event);
 				return false;
 			}
-			return true;
 		});
 	}
 
@@ -84,8 +85,8 @@ class Suggest<T> {
 	}
 
 	useSelectedItem(event: MouseEvent | KeyboardEvent) {
-		if (this.selectedItem === undefined) {
-			return;
+		if (this.selectedItem == undefined) {
+			return
 		}
 
 		const currentValue = this.values[this.selectedItem];
@@ -100,7 +101,7 @@ class Suggest<T> {
 			this.suggestions.length
 		);
 
-		if (this.selectedItem !== undefined) {
+		if (this.selectedItem != undefined) {
 			this.suggestions[this.selectedItem]?.removeClass("is-selected");
 		}
 
@@ -120,7 +121,7 @@ export abstract class TextInputSuggest<T> implements ISuggestOwner<T> {
 	protected app: App;
 	protected inputEl: HTMLInputElement | HTMLTextAreaElement;
 
-	private popper: any; // PopperInstance
+	private popper: PopperInstance | undefined;
 	private scope: Scope;
 	private suggestEl: HTMLElement;
 	private suggest: Suggest<T>;
@@ -171,12 +172,29 @@ export abstract class TextInputSuggest<T> implements ISuggestOwner<T> {
 		(<any>this.app).keymap.pushScope(this.scope);
 
 		container.appendChild(this.suggestEl);
-
-		// Position the suggestor element
-		this.suggestEl.addClass('listy-suggestor');
-		const rect = inputEl.getBoundingClientRect();
-		this.suggestEl.style.left = `${rect.left}px`;
-		this.suggestEl.style.top = `${rect.bottom}px`;
+		this.popper = createPopper(inputEl, this.suggestEl, {
+			placement: "bottom-start",
+			modifiers: [
+				{
+					name: "sameWidth",
+					enabled: true,
+					fn: ({ state, instance }) => {
+						// Note: positioning needs to be calculated twice -
+						// first pass - positioning it according to the width of the popper
+						// second pass - position it with the width bound to the reference element
+						// we need to early exit to avoid an infinite loop
+						const targetWidth = `${state.rects.reference.width}px`;
+						if (state.styles.popper.width === targetWidth) {
+							return;
+						}
+						state.styles.popper.width = targetWidth;
+						instance.update();
+					},
+					phase: "beforeWrite",
+					requires: ["computeStyles"],
+				},
+			],
+		});
 	}
 
 	close(): void {
@@ -184,10 +202,11 @@ export abstract class TextInputSuggest<T> implements ISuggestOwner<T> {
 		(<any>this.app).keymap.popScope(this.scope);
 
 		this.suggest.setSuggestions([]);
+		if (this.popper) this.popper.destroy();
 		this.suggestEl.detach();
 	}
 
 	abstract getSuggestions(inputStr: string): T[];
 	abstract renderSuggestion(item: T, el: HTMLElement): void;
-	abstract selectSuggestion(item: T, evt: MouseEvent | KeyboardEvent): void;
+	abstract selectSuggestion(item: T): void;
 }

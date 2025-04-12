@@ -38,17 +38,12 @@ export class ListyImportModal extends Modal {
 	onOpen() {
 		const { contentEl } = this;
 
-		const heading = contentEl.createEl("h2");
-		heading.textContent = "Import Listy Lists";
+		const heading = contentEl.createEl("h2", { text: "Import Listy Lists" });
 
 		const description = contentEl.createEl("p");
-		const text = document.createTextNode("Please select your ");
-		const em = document.createElement("em");
-		em.textContent = "Listy export file";
-		const text2 = document.createTextNode(" (.json or .listy)");
-		description.appendChild(text);
-		description.appendChild(em);
-		description.appendChild(text2);
+		description.createSpan({ text: "Please select your " });
+		description.createEl("em", { text: "Listy export file" });
+		description.createSpan({ text: " (.json or .listy)" });
 
 		this.inputFileEl = contentEl.createEl("input");
 		this.inputFileEl.type = "file";
@@ -66,10 +61,8 @@ export class ListyImportModal extends Modal {
 				try {
 					this.fileContent = JSON.parse(reader.result as string);
 					this.goButtonEl.disabled = false;
-					this.goButtonEl.setAttr(
-						"style",
-						"background-color: green; color: black"
-					);
+					this.goButtonEl.removeClass('disabled');
+					this.goButtonEl.addClass('ready');
 					new Notice("Ready to import!");
 				} catch (e) {
 					console.error("Error parsing JSON:", e);
@@ -88,10 +81,8 @@ export class ListyImportModal extends Modal {
 		this.goButtonEl = contentEl.createEl("button");
 		this.goButtonEl.textContent = "Import";
 		this.goButtonEl.disabled = true;
-		this.goButtonEl.setAttr(
-			"style",
-			"background-color: red; color: white; margin-top: 15px;"
-		);
+		this.goButtonEl.addClass('import-button');
+		this.goButtonEl.addClass('disabled');
 		this.goButtonEl.addEventListener("click", () => {
 			new Notice("Importing lists...");
 			this.processJsonData()

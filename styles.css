@@ -1,27 +1,13 @@
-.suggestion-container {
-	background-color: var(--background-primary);
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 4px;
-	box-shadow: var(--shadow-s);
-	max-height: 300px;
-	overflow-y: auto;
-	z-index: 1000;
+.import-button {
+	margin-top: 15px;
 }
 
-.suggestion-item {
-	cursor: pointer;
-	padding: 8px 12px;
-	min-height: 2em;
-	display: flex;
-	align-items: center;
+.import-button.ready {
+	background-color: green;
+	color: black;
 }
 
-.suggestion-item.is-selected {
-	background-color: var(--background-secondary);
-}
-
-.listy-suggestor {
-	position: absolute;
-	width: fit-content;
-	z-index: 1000;
+.import-button.disabled {
+	background-color: red;
+	color: white;
 }
