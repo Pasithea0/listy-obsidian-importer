@@ -1,6 +1,6 @@
 {
 	"name": "listy-importer",
-	"version": "1.0.7",
+	"version": "1.0.8",
 	"description": "import listy lists",
 	"main": "main.js",
 	"scripts": {
